@@ -23,17 +23,23 @@ class BFLConfigLoader:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         config_path = os.path.join(current_dir, "config.ini")
         
-        if not os.path.exists(config_path):
-            raise FileNotFoundError(f"Config file not found at {config_path}")
+        if os.path.exists(config_path):
+            self.config.read(config_path)
+    
+    def get_api_key(self, node_api_key=None):
+        # Primero intentar obtener la key del archivo config.ini
+        try:
+            if self.config.has_section('API') and self.config.has_option('API', 'X_KEY'):
+                return self.config.get('API', 'X_KEY')
+        except:
+            pass
             
-        self.config.read(config_path)
-        
-    @property
-    def api_key(self):
-        key = self.config.get('API', 'X_KEY', fallback=None)
-        if not key:
-            raise ValueError("X_KEY not found in config.ini")
-        return key
+        # Si no hay key en config.ini o hay error, usar la key del nodo
+        if node_api_key and node_api_key.strip():
+            return node_api_key
+            
+        # Si no hay key en ningún lado, lanzar error
+        raise ValueError("No se encontró una API key válida. Por favor, configure una API key en el nodo o en el archivo config.ini")
 
 def image_to_base64(image_tensor, format='PNG'):
     image = Image.fromarray((image_tensor.numpy().squeeze() * 255).astype(np.uint8))
@@ -48,7 +54,7 @@ def mask_to_base64(mask_tensor, format='PNG'):
     mask_image.save(buffered, format=format)
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-def handle_api_response(response, output_format):
+def handle_api_response(response, output_format, node_api_key=None):
     if response.status_code != 200:
         raise Exception(f"API Error {response.status_code}: {response.text}")
     
@@ -57,9 +63,9 @@ def handle_api_response(response, output_format):
     if 'id' not in result:
         raise Exception("Invalid API response format")
     
-    return poll_task_result(result['id'], output_format)
+    return poll_task_result(result['id'], output_format, node_api_key=node_api_key)
 
-def poll_task_result(task_id, output_format, max_attempts=15):
+def poll_task_result(task_id, output_format, max_attempts=15, node_api_key=None):
     config = BFLConfigLoader()
     base_url = "https://api.us1.bfl.ai/v1/"
     
@@ -67,7 +73,7 @@ def poll_task_result(task_id, output_format, max_attempts=15):
         try:
             response = requests.get(
                 urljoin(base_url, f"get_result?id={task_id}"),
-                headers={"x-key": config.api_key},
+                headers={"x-key": config.get_api_key(node_api_key)},
                 timeout=30
             )
             

@@ -13,6 +13,7 @@ class BFL_ImageGenerator:
                 "api_version": (["1.1", "1.0"], {"default": "1.1"}),
                 "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
                 "output_format": (["jpeg", "png"], {"default": "jpeg"}),
+                "x_key": ("STRING", {"default": ""}),
             },
             "optional": {
                 "seed": ("INT", {"default": 30}),
@@ -51,12 +52,12 @@ class BFL_ImageGenerator:
             
             response = requests.post(
                 url=f"https://api.us1.bfl.ai/v1/{endpoint}",
-                headers={"x-key": config.api_key, "Content-Type": "application/json"},
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json={k: v for k, v in payload.items() if v is not None},
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format']),)
+            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
         
         except Exception as e:
             print(f"BFL Generation Error: {str(e)}")
@@ -74,6 +75,7 @@ class BFL_Inpainting:
                 "guidance": ("FLOAT", {"default": 60.0, "min": 1.0, "max": 100.0}),
                 "output_format": (["jpeg", "png"], {"default": "jpeg"}),
                 "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
+                "x_key": ("STRING", {"default": ""}),
             },
             "optional": {
                 "seed": ("INT", {"default": -1}),
@@ -101,12 +103,12 @@ class BFL_Inpainting:
             
             response = requests.post(
                 url="https://api.us1.bfl.ai/v1/flux-pro-1.0-fill",
-                headers={"x-key": config.api_key, "Content-Type": "application/json"},
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json={k: v for k, v in payload.items() if v is not None},
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format']),)
+            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
         
         except Exception as e:
             print(f"BFL Inpainting Error: {str(e)}")
@@ -125,6 +127,7 @@ class BFL_CannyControl:
                 "guidance": ("FLOAT", {"default": 30.0, "min": 1.0, "max": 100.0}),
                 "output_format": (["jpeg", "png"], {"default": "jpeg"}),
                 "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
+                "x_key": ("STRING", {"default": ""}),
             },
             "optional": {
                 "preprocessed_image": ("IMAGE",),
@@ -157,12 +160,12 @@ class BFL_CannyControl:
             
             response = requests.post(
                 url="https://api.us1.bfl.ai/v1/flux-pro-1.0-canny",
-                headers={"x-key": config.api_key, "Content-Type": "application/json"},
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json=payload,
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format']),)
+            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
         
         except Exception as e:
             print(f"BFL Canny Error: {str(e)}")
@@ -183,6 +186,7 @@ class BFL_ImageExpander:
                 "guidance": ("FLOAT", {"default": 60.0, "min": 1.5, "max": 100.0}),
                 "output_format": (["jpeg", "png"], {"default": "jpeg"}),
                 "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
+                "x_key": ("STRING", {"default": ""}),
             },
             "optional": {
                 "seed": ("INT", {"default": -1}),
@@ -215,12 +219,12 @@ class BFL_ImageExpander:
             
             response = requests.post(
                 url="https://api.us1.bfl.ai/v1/flux-pro-1.0-expand",
-                headers={"x-key": config.api_key, "Content-Type": "application/json"},
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json={k: v for k, v in payload.items() if v is not None},
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format']),)
+            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
         
         except Exception as e:
             print(f"BFL Expansion Error: {str(e)}")
