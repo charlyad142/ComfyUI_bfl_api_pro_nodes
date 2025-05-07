@@ -1,0 +1,14 @@
+[project]
+name = "bfl_api_pro_nodes"
+description = "This custom node for ComfyUI provides integration with the BFL (Black Forest Labs) API to enhance and optimize image processing. It allows the use of Flux Pro directly within ComfyUI, offering advanced image processing capabilities."
+version = "1.0.0"
+license = {file = "LICENSE"}
+
+[project.urls]
+Repository = "https://github.com/charlyad142/ComfyUI_bfl_api_pro_nodes"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "ComfyUI_bfl_api_pro_nodes"
+Icon = ""
