@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Entornos virtuales
+venv/
+env/
+ENV/
+
+# IDEs y editores
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Archivos de configuración local
+.env
+.env.local
+config.json
+config.ini
+
+# Archivos de caché y logs
+*.log
+.cache/
+.pytest_cache/
+
+# Archivos temporales
+*.tmp
+*.temp
+.coverage
+htmlcov/
+
+# Archivos específicos de ComfyUI
+models/
+outputs/
+temp/ 
