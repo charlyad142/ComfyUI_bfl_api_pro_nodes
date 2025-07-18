@@ -132,6 +132,7 @@ class BFL_CannyControl:
             "optional": {
                 "preprocessed_image": ("IMAGE",),
                 "seed": ("INT", {"default": -1}),
+                "prompt_upsampling": ("BOOLEAN", {"default": False}),
             }
         }
     
@@ -153,6 +154,7 @@ class BFL_CannyControl:
                 "output_format": kwargs['output_format'],
                 "safety_tolerance": kwargs['safety_tolerance'],
                 "seed": kwargs['seed'] if kwargs['seed'] != -1 else None,
+                "prompt_upsampling": kwargs.get('prompt_upsampling', False),
             }
             
             if kwargs.get('preprocessed_image'):
@@ -230,11 +232,180 @@ class BFL_ImageExpander:
             print(f"BFL Expansion Error: {str(e)}")
             return (create_error_image(),)
 
+class BFL_FluxKontext:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": ("STRING", {"multiline": True}),
+                "model": (["flux-kontext-pro", "flux-kontext-max"], {"default": "flux-kontext-pro"}),
+                "output_format": (["jpeg", "png"], {"default": "png"}),
+                "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
+                "x_key": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "input_image": ("IMAGE",),
+                "seed": ("INT", {"default": -1}),
+                "aspect_ratio": ("STRING", {"default": ""}),
+                "prompt_upsampling": ("BOOLEAN", {"default": False}),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "generate"
+    CATEGORY = "BFL/Kontext"
+
+    def generate(self, **kwargs):
+        try:
+            config = BFLConfigLoader()
+            
+            payload = {
+                "prompt": kwargs['prompt'],
+                "output_format": kwargs['output_format'],
+                "safety_tolerance": kwargs['safety_tolerance'],
+                "seed": kwargs['seed'] if kwargs['seed'] != -1 else None,
+                "prompt_upsampling": kwargs.get('prompt_upsampling', False),
+            }
+            
+            # Agregar campos opcionales solo si tienen valor
+            if kwargs.get('input_image') is not None:
+                payload['input_image'] = image_to_base64(kwargs['input_image'])
+            
+            if kwargs.get('aspect_ratio') and kwargs['aspect_ratio'].strip():
+                payload['aspect_ratio'] = kwargs['aspect_ratio']
+            
+            response = requests.post(
+                url=f"https://api.us1.bfl.ai/v1/{kwargs['model']}",
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
+                json={k: v for k, v in payload.items() if v is not None},
+                timeout=30
+            )
+            
+            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
+        
+        except Exception as e:
+            print(f"BFL Flux Kontext Error: {str(e)}")
+            return (create_error_image(),)
+
+class BFL_DepthControl:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": ("STRING", {"multiline": True}),
+                "control_image": ("IMAGE",),
+                "steps": ("INT", {"default": 50, "min": 15, "max": 50}),
+                "guidance": ("FLOAT", {"default": 15.0, "min": 1.0, "max": 100.0}),
+                "output_format": (["jpeg", "png"], {"default": "jpeg"}),
+                "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
+                "x_key": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "preprocessed_image": ("IMAGE",),
+                "seed": ("INT", {"default": -1}),
+                "prompt_upsampling": ("BOOLEAN", {"default": False}),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "generate"
+    CATEGORY = "BFL/ControlNet"
+
+    def generate(self, **kwargs):
+        try:
+            config = BFLConfigLoader()
+            
+            payload = {
+                "prompt": kwargs['prompt'],
+                "control_image": image_to_base64(kwargs['control_image']),
+                "steps": kwargs['steps'],
+                "guidance": kwargs['guidance'],
+                "output_format": kwargs['output_format'],
+                "safety_tolerance": kwargs['safety_tolerance'],
+                "seed": kwargs['seed'] if kwargs['seed'] != -1 else None,
+                "prompt_upsampling": kwargs.get('prompt_upsampling', False),
+            }
+            
+            if kwargs.get('preprocessed_image'):
+                payload['preprocessed_image'] = image_to_base64(kwargs['preprocessed_image'])
+            
+            response = requests.post(
+                url="https://api.us1.bfl.ai/v1/flux-pro-1.0-depth",
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
+                json=payload,
+                timeout=30
+            )
+            
+            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
+        
+        except Exception as e:
+            print(f"BFL Depth Error: {str(e)}")
+            return (create_error_image(),)
+
+class BFL_FluxUltra:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": ("STRING", {"multiline": True}),
+                "aspect_ratio": ("STRING", {"default": "16:9"}),
+                "output_format": (["jpeg", "png"], {"default": "jpeg"}),
+                "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
+                "x_key": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "seed": ("INT", {"default": -1}),
+                "prompt_upsampling": ("BOOLEAN", {"default": False}),
+                "raw": ("BOOLEAN", {"default": False}),
+                "image_prompt": ("IMAGE",),
+                "image_prompt_strength": ("FLOAT", {"default": 0.1, "min": 0.0, "max": 1.0}),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "generate"
+    CATEGORY = "BFL/Ultra"
+
+    def generate(self, **kwargs):
+        try:
+            config = BFLConfigLoader()
+            
+            payload = {
+                "prompt": kwargs['prompt'],
+                "aspect_ratio": kwargs['aspect_ratio'],
+                "output_format": kwargs['output_format'],
+                "safety_tolerance": kwargs['safety_tolerance'],
+                "seed": kwargs['seed'] if kwargs['seed'] != -1 else None,
+                "prompt_upsampling": kwargs.get('prompt_upsampling', False),
+                "raw": kwargs.get('raw', False),
+            }
+            
+            # Agregar image_prompt solo si se proporciona
+            if kwargs.get('image_prompt') is not None:
+                payload['image_prompt'] = image_to_base64(kwargs['image_prompt'])
+                payload['image_prompt_strength'] = kwargs.get('image_prompt_strength', 0.1)
+            
+            response = requests.post(
+                url="https://api.us1.bfl.ai/v1/flux-pro-1.1-ultra",
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
+                json={k: v for k, v in payload.items() if v is not None},
+                timeout=30
+            )
+            
+            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
+        
+        except Exception as e:
+            print(f"BFL Flux Ultra Error: {str(e)}")
+            return (create_error_image(),)
+
 NODE_CLASS_MAPPINGS = {
     "BFL Image Generator": BFL_ImageGenerator,
     "BFL Inpainting": BFL_Inpainting,
     "BFL Canny Control": BFL_CannyControl,
     "BFL Image Expander": BFL_ImageExpander,
+    "BFL Flux Kontext": BFL_FluxKontext,
+    "BFL Depth Control": BFL_DepthControl,
+    "BFL Flux Ultra": BFL_FluxUltra,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -242,4 +413,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BFL Inpainting": "BFL Inpainting (Pro 1.0 Fill)",
     "BFL Canny Control": "BFL Canny Control (Pro 1.0)",
     "BFL Image Expander": "BFL Image Expander (Pro 1.0)",
+    "BFL Flux Kontext": "BFL Flux Kontext (Pro/Max)",
+    "BFL Depth Control": "BFL Depth Control (Pro 1.0)",
+    "BFL Flux Ultra": "BFL Flux Ultra (Pro 1.1)",
 }
