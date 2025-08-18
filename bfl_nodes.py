@@ -245,6 +245,9 @@ class BFL_FluxKontext:
             },
             "optional": {
                 "input_image": ("IMAGE",),
+                "input_image_2": ("IMAGE",),
+                "input_image_3": ("IMAGE",),
+                "input_image_4": ("IMAGE",),
                 "seed": ("INT", {"default": -1}),
                 "aspect_ratio": ("STRING", {"default": ""}),
                 "prompt_upsampling": ("BOOLEAN", {"default": False}),
@@ -270,6 +273,12 @@ class BFL_FluxKontext:
             # Agregar campos opcionales solo si tienen valor
             if kwargs.get('input_image') is not None:
                 payload['input_image'] = image_to_base64(kwargs['input_image'])
+            if kwargs.get('input_image_2') is not None:
+                payload['input_image_2'] = image_to_base64(kwargs['input_image_2'])
+            if kwargs.get('input_image_3') is not None:
+                payload['input_image_3'] = image_to_base64(kwargs['input_image_3'])
+            if kwargs.get('input_image_4') is not None:
+                payload['input_image_4'] = image_to_base64(kwargs['input_image_4'])
             
             if kwargs.get('aspect_ratio') and kwargs['aspect_ratio'].strip():
                 payload['aspect_ratio'] = kwargs['aspect_ratio']
