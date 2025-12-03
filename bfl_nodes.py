@@ -10,7 +10,7 @@ class BFL_ImageGenerator:
                 "prompt": ("STRING", {"multiline": True}),
                 "width": ("INT", {"default": 1024, "min": 512, "max": 2048}),
                 "height": ("INT", {"default": 768, "min": 512, "max": 2048}),
-                "api_version": (["1.1", "1.0"], {"default": "1.1"}),
+                "api_version": (["1.1"], {"default": "1.1"}),
                 "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
                 "output_format": (["jpeg", "png"], {"default": "jpeg"}),
                 "x_key": ("STRING", {"default": ""}),
@@ -23,14 +23,14 @@ class BFL_ImageGenerator:
             }
         }
     
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE", "STRING")
     FUNCTION = "generate"
     CATEGORY = "BFL/Generation"
 
     def generate(self, **kwargs):
         try:
             config = BFLConfigLoader()
-            endpoint = "flux-pro-1.1" if kwargs['api_version'] == "1.1" else "flux-pro"
+            endpoint = "flux-pro-1.1" if kwargs['api_version'] == "1.1" else "flux-pro-1.1"
             
             payload = {
                 "prompt": kwargs['prompt'],
@@ -57,11 +57,12 @@ class BFL_ImageGenerator:
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
+            return handle_api_response_with_status(response, kwargs['output_format'], kwargs['x_key'])
         
         except Exception as e:
-            print(f"BFL Generation Error: {str(e)}")
-            return (create_error_image(),)
+            error_msg = str(e)
+            print(f"BFL Generation Error: {error_msg}")
+            return (create_error_image(), f"✗ Error: {error_msg}")
 
 class BFL_Inpainting:
     @classmethod
@@ -82,7 +83,7 @@ class BFL_Inpainting:
             }
         }
     
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE", "STRING")
     FUNCTION = "inpaint"
     CATEGORY = "BFL/Inpainting"
 
@@ -108,70 +109,12 @@ class BFL_Inpainting:
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
+            return handle_api_response_with_status(response, kwargs['output_format'], kwargs['x_key'])
         
         except Exception as e:
-            print(f"BFL Inpainting Error: {str(e)}")
-            return (create_error_image(),)
-
-class BFL_CannyControl:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "prompt": ("STRING", {"multiline": True}),
-                "control_image": ("IMAGE",),
-                "canny_low": ("INT", {"default": 50, "min": 0, "max": 500}),
-                "canny_high": ("INT", {"default": 200, "min": 0, "max": 500}),
-                "steps": ("INT", {"default": 50, "min": 15, "max": 50}),
-                "guidance": ("FLOAT", {"default": 30.0, "min": 1.0, "max": 100.0}),
-                "output_format": (["jpeg", "png"], {"default": "jpeg"}),
-                "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
-                "x_key": ("STRING", {"default": ""}),
-            },
-            "optional": {
-                "preprocessed_image": ("IMAGE",),
-                "seed": ("INT", {"default": -1}),
-                "prompt_upsampling": ("BOOLEAN", {"default": False}),
-            }
-        }
-    
-    RETURN_TYPES = ("IMAGE",)
-    FUNCTION = "generate"
-    CATEGORY = "BFL/ControlNet"
-
-    def generate(self, **kwargs):
-        try:
-            config = BFLConfigLoader()
-            
-            payload = {
-                "prompt": kwargs['prompt'],
-                "control_image": image_to_base64(kwargs['control_image']),
-                "canny_low_threshold": kwargs['canny_low'],
-                "canny_high_threshold": kwargs['canny_high'],
-                "steps": kwargs['steps'],
-                "guidance": kwargs['guidance'],
-                "output_format": kwargs['output_format'],
-                "safety_tolerance": kwargs['safety_tolerance'],
-                "seed": kwargs['seed'] if kwargs['seed'] != -1 else None,
-                "prompt_upsampling": kwargs.get('prompt_upsampling', False),
-            }
-            
-            if kwargs.get('preprocessed_image'):
-                payload['preprocessed_image'] = image_to_base64(kwargs['preprocessed_image'])
-            
-            response = requests.post(
-                url="https://api.bfl.ai/v1/flux-pro-1.0-canny",
-                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
-                json=payload,
-                timeout=30
-            )
-            
-            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
-        
-        except Exception as e:
-            print(f"BFL Canny Error: {str(e)}")
-            return (create_error_image(),)
+            error_msg = str(e)
+            print(f"BFL Inpainting Error: {error_msg}")
+            return (create_error_image(), f"✗ Error: {error_msg}")
 
 class BFL_ImageExpander:
     @classmethod
@@ -196,7 +139,7 @@ class BFL_ImageExpander:
             }
         }
     
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE", "STRING")
     FUNCTION = "expand"
     CATEGORY = "BFL/Expansion"
 
@@ -226,11 +169,12 @@ class BFL_ImageExpander:
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
+            return handle_api_response_with_status(response, kwargs['output_format'], kwargs['x_key'])
         
         except Exception as e:
-            print(f"BFL Expansion Error: {str(e)}")
-            return (create_error_image(),)
+            error_msg = str(e)
+            print(f"BFL Expansion Error: {error_msg}")
+            return (create_error_image(), f"✗ Error: {error_msg}")
 
 class BFL_FluxKontext:
     @classmethod
@@ -254,7 +198,7 @@ class BFL_FluxKontext:
             }
         }
     
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE", "STRING")
     FUNCTION = "generate"
     CATEGORY = "BFL/Kontext"
 
@@ -290,66 +234,12 @@ class BFL_FluxKontext:
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
+            return handle_api_response_with_status(response, kwargs['output_format'], kwargs['x_key'])
         
         except Exception as e:
-            print(f"BFL Flux Kontext Error: {str(e)}")
-            return (create_error_image(),)
-
-class BFL_DepthControl:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "prompt": ("STRING", {"multiline": True}),
-                "control_image": ("IMAGE",),
-                "steps": ("INT", {"default": 50, "min": 15, "max": 50}),
-                "guidance": ("FLOAT", {"default": 15.0, "min": 1.0, "max": 100.0}),
-                "output_format": (["jpeg", "png"], {"default": "jpeg"}),
-                "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 6}),
-                "x_key": ("STRING", {"default": ""}),
-            },
-            "optional": {
-                "preprocessed_image": ("IMAGE",),
-                "seed": ("INT", {"default": -1}),
-                "prompt_upsampling": ("BOOLEAN", {"default": False}),
-            }
-        }
-    
-    RETURN_TYPES = ("IMAGE",)
-    FUNCTION = "generate"
-    CATEGORY = "BFL/ControlNet"
-
-    def generate(self, **kwargs):
-        try:
-            config = BFLConfigLoader()
-            
-            payload = {
-                "prompt": kwargs['prompt'],
-                "control_image": image_to_base64(kwargs['control_image']),
-                "steps": kwargs['steps'],
-                "guidance": kwargs['guidance'],
-                "output_format": kwargs['output_format'],
-                "safety_tolerance": kwargs['safety_tolerance'],
-                "seed": kwargs['seed'] if kwargs['seed'] != -1 else None,
-                "prompt_upsampling": kwargs.get('prompt_upsampling', False),
-            }
-            
-            if kwargs.get('preprocessed_image'):
-                payload['preprocessed_image'] = image_to_base64(kwargs['preprocessed_image'])
-            
-            response = requests.post(
-                url="https://api.bfl.ai/v1/flux-pro-1.0-depth",
-                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
-                json=payload,
-                timeout=30
-            )
-            
-            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
-        
-        except Exception as e:
-            print(f"BFL Depth Error: {str(e)}")
-            return (create_error_image(),)
+            error_msg = str(e)
+            print(f"BFL Flux Kontext Error: {error_msg}")
+            return (create_error_image(), f"✗ Error: {error_msg}")
 
 class BFL_FluxUltra:
     @classmethod
@@ -371,7 +261,7 @@ class BFL_FluxUltra:
             }
         }
     
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE", "STRING")
     FUNCTION = "generate"
     CATEGORY = "BFL/Ultra"
 
@@ -401,28 +291,196 @@ class BFL_FluxUltra:
                 timeout=30
             )
             
-            return (handle_api_response(response, kwargs['output_format'], kwargs['x_key']),)
+            return handle_api_response_with_status(response, kwargs['output_format'], kwargs['x_key'])
         
         except Exception as e:
-            print(f"BFL Flux Ultra Error: {str(e)}")
-            return (create_error_image(),)
+            error_msg = str(e)
+            print(f"BFL Flux Ultra Error: {error_msg}")
+            return (create_error_image(), f"✗ Error: {error_msg}")
+
+class BFL_Flux2Pro:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": ("STRING", {"multiline": True}),
+                "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 5}),
+                "output_format": (["jpeg", "png"], {"default": "jpeg"}),
+                "x_key": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "input_image": ("IMAGE",),
+                "input_image_2": ("IMAGE",),
+                "input_image_3": ("IMAGE",),
+                "input_image_4": ("IMAGE",),
+                "input_image_5": ("IMAGE",),
+                "input_image_6": ("IMAGE",),
+                "input_image_7": ("IMAGE",),
+                "input_image_8": ("IMAGE",),
+                "seed": ("INT", {"default": -1}),
+                "width": ("INT", {"default": 0, "min": 64}),
+                "height": ("INT", {"default": 0, "min": 64}),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE", "STRING")
+    FUNCTION = "generate"
+    CATEGORY = "BFL/Flux2"
+
+    def generate(self, **kwargs):
+        try:
+            config = BFLConfigLoader()
+            
+            payload = {
+                "prompt": kwargs['prompt'],
+                "safety_tolerance": kwargs['safety_tolerance'],
+                "output_format": kwargs['output_format'],
+                "seed": kwargs['seed'] if kwargs['seed'] != -1 else None,
+            }
+            
+            # Agregar width y height solo si tienen valor mayor a 0
+            if kwargs.get('width', 0) > 0:
+                payload['width'] = kwargs['width']
+            if kwargs.get('height', 0) > 0:
+                payload['height'] = kwargs['height']
+            
+            # Agregar imágenes de entrada solo si se proporcionan
+            if kwargs.get('input_image') is not None:
+                payload['input_image'] = image_to_base64(kwargs['input_image'])
+            if kwargs.get('input_image_2') is not None:
+                payload['input_image_2'] = image_to_base64(kwargs['input_image_2'])
+            if kwargs.get('input_image_3') is not None:
+                payload['input_image_3'] = image_to_base64(kwargs['input_image_3'])
+            if kwargs.get('input_image_4') is not None:
+                payload['input_image_4'] = image_to_base64(kwargs['input_image_4'])
+            if kwargs.get('input_image_5') is not None:
+                payload['input_image_5'] = image_to_base64(kwargs['input_image_5'])
+            if kwargs.get('input_image_6') is not None:
+                payload['input_image_6'] = image_to_base64(kwargs['input_image_6'])
+            if kwargs.get('input_image_7') is not None:
+                payload['input_image_7'] = image_to_base64(kwargs['input_image_7'])
+            if kwargs.get('input_image_8') is not None:
+                payload['input_image_8'] = image_to_base64(kwargs['input_image_8'])
+            
+            response = requests.post(
+                url="https://api.bfl.ai/v1/flux-2-pro",
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
+                json={k: v for k, v in payload.items() if v is not None},
+                timeout=30
+            )
+            
+            return handle_api_response_with_status(response, kwargs['output_format'], kwargs['x_key'])
+        
+        except Exception as e:
+            error_msg = str(e)
+            print(f"BFL Flux 2 Pro Error: {error_msg}")
+            return (create_error_image(), f"✗ Error: {error_msg}")
+
+class BFL_Flux2Flex:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": ("STRING", {"multiline": True}),
+                "safety_tolerance": ("INT", {"default": 2, "min": 0, "max": 5}),
+                "output_format": (["jpeg", "png"], {"default": "jpeg"}),
+                "x_key": ("STRING", {"default": ""}),
+            },
+            "optional": {
+                "input_image": ("IMAGE",),
+                "input_image_2": ("IMAGE",),
+                "input_image_3": ("IMAGE",),
+                "input_image_4": ("IMAGE",),
+                "input_image_5": ("IMAGE",),
+                "input_image_6": ("IMAGE",),
+                "input_image_7": ("IMAGE",),
+                "input_image_8": ("IMAGE",),
+                "input_image_blob_path": ("STRING", {"default": ""}),
+                "seed": ("INT", {"default": -1}),
+                "width": ("INT", {"default": 0, "min": 64}),
+                "height": ("INT", {"default": 0, "min": 64}),
+                "guidance": ("FLOAT", {"default": 5.0, "min": 1.5, "max": 10.0}),
+                "steps": ("INT", {"default": 50, "min": 1, "max": 50}),
+                "prompt_upsampling": ("BOOLEAN", {"default": True}),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE", "STRING")
+    FUNCTION = "generate"
+    CATEGORY = "BFL/Flux2"
+
+    def generate(self, **kwargs):
+        try:
+            config = BFLConfigLoader()
+            
+            payload = {
+                "prompt": kwargs['prompt'],
+                "safety_tolerance": kwargs['safety_tolerance'],
+                "output_format": kwargs['output_format'],
+                "prompt_upsampling": kwargs.get('prompt_upsampling', True),
+                "guidance": kwargs.get('guidance', 5.0),
+                "steps": kwargs.get('steps', 50),
+                "seed": kwargs['seed'] if kwargs['seed'] != -1 else None,
+            }
+            
+            # Agregar width y height solo si tienen valor mayor a 0
+            if kwargs.get('width', 0) > 0:
+                payload['width'] = kwargs['width']
+            if kwargs.get('height', 0) > 0:
+                payload['height'] = kwargs['height']
+            
+            # Agregar input_image_blob_path solo si tiene valor
+            if kwargs.get('input_image_blob_path') and kwargs['input_image_blob_path'].strip():
+                payload['input_image_blob_path'] = kwargs['input_image_blob_path']
+            
+            # Agregar imágenes de entrada solo si se proporcionan
+            if kwargs.get('input_image') is not None:
+                payload['input_image'] = image_to_base64(kwargs['input_image'])
+            if kwargs.get('input_image_2') is not None:
+                payload['input_image_2'] = image_to_base64(kwargs['input_image_2'])
+            if kwargs.get('input_image_3') is not None:
+                payload['input_image_3'] = image_to_base64(kwargs['input_image_3'])
+            if kwargs.get('input_image_4') is not None:
+                payload['input_image_4'] = image_to_base64(kwargs['input_image_4'])
+            if kwargs.get('input_image_5') is not None:
+                payload['input_image_5'] = image_to_base64(kwargs['input_image_5'])
+            if kwargs.get('input_image_6') is not None:
+                payload['input_image_6'] = image_to_base64(kwargs['input_image_6'])
+            if kwargs.get('input_image_7') is not None:
+                payload['input_image_7'] = image_to_base64(kwargs['input_image_7'])
+            if kwargs.get('input_image_8') is not None:
+                payload['input_image_8'] = image_to_base64(kwargs['input_image_8'])
+            
+            response = requests.post(
+                url="https://api.bfl.ai/v1/flux-2-flex",
+                headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
+                json={k: v for k, v in payload.items() if v is not None},
+                timeout=30
+            )
+            
+            return handle_api_response_with_status(response, kwargs['output_format'], kwargs['x_key'])
+        
+        except Exception as e:
+            error_msg = str(e)
+            print(f"BFL Flux 2 Flex Error: {error_msg}")
+            return (create_error_image(), f"✗ Error: {error_msg}")
 
 NODE_CLASS_MAPPINGS = {
     "BFL Image Generator": BFL_ImageGenerator,
     "BFL Inpainting": BFL_Inpainting,
-    "BFL Canny Control": BFL_CannyControl,
     "BFL Image Expander": BFL_ImageExpander,
     "BFL Flux Kontext": BFL_FluxKontext,
-    "BFL Depth Control": BFL_DepthControl,
     "BFL Flux Ultra": BFL_FluxUltra,
+    "BFL Flux 2 Pro": BFL_Flux2Pro,
+    "BFL Flux 2 Flex": BFL_Flux2Flex,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "BFL Image Generator": "BFL Image Generator (Pro 1.1/1.0)",
     "BFL Inpainting": "BFL Inpainting (Pro 1.0 Fill)",
-    "BFL Canny Control": "BFL Canny Control (Pro 1.0)",
     "BFL Image Expander": "BFL Image Expander (Pro 1.0)",
     "BFL Flux Kontext": "BFL Flux Kontext (Pro/Max)",
-    "BFL Depth Control": "BFL Depth Control (Pro 1.0)",
     "BFL Flux Ultra": "BFL Flux Ultra (Pro 1.1)",
+    "BFL Flux 2 Pro": "BFL Flux 2 Pro",
+    "BFL Flux 2 Flex": "BFL Flux 2 Flex",
 }

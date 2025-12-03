@@ -101,6 +101,15 @@ def handle_api_response(response, output_format, node_api_key=None):
         
         raise Exception(f"API Error {response.status_code}: {error_msg}")
 
+def handle_api_response_with_status(response, output_format, node_api_key=None):
+    """Versión de handle_api_response que devuelve (imagen, mensaje)"""
+    try:
+        image, message = handle_api_response(response, output_format, node_api_key)
+        return (image, message)
+    except Exception as e:
+        error_msg = str(e)
+        return (create_error_image(), f"✗ Error: {error_msg}")
+
 def poll_task_result(task_id, output_format, max_attempts=10, node_api_key=None):
     config = BFLConfigLoader()
     base_url = "https://api.bfl.ai/v1/"
@@ -132,15 +141,36 @@ def poll_task_result(task_id, output_format, max_attempts=10, node_api_key=None)
                 if 'result' not in data or not data['result'] or 'sample' not in data['result']:
                     raise Exception("Task completed but no result available")
                 
-                img_response = requests.get(data['result']['sample'])
-                img_response.raise_for_status()
-                img = Image.open(io.BytesIO(img_response.content))
+                # Obtener la URL de la imagen desde el campo 'sample'
+                image_url = data['result']['sample']
+                print(f"Downloading image from: {image_url}")
+                
+                # Hacer solicitud GET para descargar la imagen desde Azure Blob Storage
+                try:
+                    img_response = requests.get(
+                        image_url,
+                        timeout=60,  # Timeout más largo para descargas de imágenes
+                        headers={'User-Agent': 'ComfyUI-BFL-API/1.0'}  # Headers apropiados
+                    )
+                    img_response.raise_for_status()
+                    
+                    # Verificar que el contenido sea una imagen válida
+                    if not img_response.content:
+                        raise Exception("Downloaded image is empty")
+                    
+                    img = Image.open(io.BytesIO(img_response.content))
+                    print(f"Successfully downloaded image: {img.size[0]}x{img.size[1]}")
+                    
+                except requests.exceptions.RequestException as e:
+                    raise Exception(f"Failed to download image from URL: {str(e)}")
+                except Exception as e:
+                    raise Exception(f"Failed to process downloaded image: {str(e)}")
                 
                 with io.BytesIO() as buffer:
                     img.save(buffer, format=output_format.upper())
                     buffer.seek(0)
                     img_array = np.array(Image.open(buffer)).astype(np.float32) / 255.0
-                    return torch.from_numpy(img_array)[None,]
+                    return torch.from_numpy(img_array)[None,], "✓ Imagen generada y descargada exitosamente"
             
             elif status == 'Error':
                 error_msg = "Task failed"
