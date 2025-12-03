@@ -51,7 +51,7 @@ class BFL_ImageGenerator:
                 payload['image_prompt'] = image_to_base64(kwargs['image_prompt'])
             
             response = requests.post(
-                url=f"https://api.us1.bfl.ai/v1/{endpoint}",
+                url=f"https://api.bfl.ai/v1/{endpoint}",
                 headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json={k: v for k, v in payload.items() if v is not None},
                 timeout=30
@@ -102,7 +102,7 @@ class BFL_Inpainting:
             }
             
             response = requests.post(
-                url="https://api.us1.bfl.ai/v1/flux-pro-1.0-fill",
+                url="https://api.bfl.ai/v1/flux-pro-1.0-fill",
                 headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json={k: v for k, v in payload.items() if v is not None},
                 timeout=30
@@ -161,7 +161,7 @@ class BFL_CannyControl:
                 payload['preprocessed_image'] = image_to_base64(kwargs['preprocessed_image'])
             
             response = requests.post(
-                url="https://api.us1.bfl.ai/v1/flux-pro-1.0-canny",
+                url="https://api.bfl.ai/v1/flux-pro-1.0-canny",
                 headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json=payload,
                 timeout=30
@@ -220,7 +220,7 @@ class BFL_ImageExpander:
             }
             
             response = requests.post(
-                url="https://api.us1.bfl.ai/v1/flux-pro-1.0-expand",
+                url="https://api.bfl.ai/v1/flux-pro-1.0-expand",
                 headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json={k: v for k, v in payload.items() if v is not None},
                 timeout=30
@@ -284,7 +284,7 @@ class BFL_FluxKontext:
                 payload['aspect_ratio'] = kwargs['aspect_ratio']
             
             response = requests.post(
-                url=f"https://api.us1.bfl.ai/v1/{kwargs['model']}",
+                url=f"https://api.bfl.ai/v1/{kwargs['model']}",
                 headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json={k: v for k, v in payload.items() if v is not None},
                 timeout=30
@@ -339,7 +339,7 @@ class BFL_DepthControl:
                 payload['preprocessed_image'] = image_to_base64(kwargs['preprocessed_image'])
             
             response = requests.post(
-                url="https://api.us1.bfl.ai/v1/flux-pro-1.0-depth",
+                url="https://api.bfl.ai/v1/flux-pro-1.0-depth",
                 headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json=payload,
                 timeout=30
@@ -395,7 +395,7 @@ class BFL_FluxUltra:
                 payload['image_prompt_strength'] = kwargs.get('image_prompt_strength', 0.1)
             
             response = requests.post(
-                url="https://api.us1.bfl.ai/v1/flux-pro-1.1-ultra",
+                url="https://api.bfl.ai/v1/flux-pro-1.1-ultra",
                 headers={"x-key": config.get_api_key(kwargs['x_key']), "Content-Type": "application/json"},
                 json={k: v for k, v in payload.items() if v is not None},
                 timeout=30
