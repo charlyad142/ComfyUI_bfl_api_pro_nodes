@@ -103,7 +103,7 @@ def handle_api_response(response, output_format, node_api_key=None):
 
 def poll_task_result(task_id, output_format, max_attempts=10, node_api_key=None):
     config = BFLConfigLoader()
-    base_url = "https://api.us1.bfl.ai/v1/"
+    base_url = "https://api.bfl.ai/v1/"
     
     for attempt in range(max_attempts):
         try:
